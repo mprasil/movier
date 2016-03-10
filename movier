@@ -1,0 +1,145 @@
+#!/usr/bin/python
+
+# version 0.2
+
+import argparse
+import os
+import codecs
+from chardet.universaldetector import UniversalDetector
+
+
+parser = argparse.ArgumentParser(description='Copy movies to your library.')
+parser.add_argument("name",
+    help="Name of the movie")
+parser.add_argument("source",
+    help="Where to copy the movie from (file or directory with movie) Defaults to current directory.",
+    nargs="?",
+    default="./")
+parser.add_argument("-d", "--dry-run",
+    help="Just print the steps, do not actually permform them",
+    action="store_true")
+parser.add_argument("-m", "--media",
+    help="Target directory with your media library",
+    type=str,
+    default="/some/media/dir")
+parser.add_argument("-e", "--extensions",
+    help="Comma separated list of movie extensions.",
+    type=str,
+    default="avi,mp4,mpeg,mpeg4,xvid,mkv,ogv")
+parser.add_argument("-s", "--sub-extensions",
+    help="Comma separated list of subtitle extensions.",
+    type=str,
+    default="sub,srt")
+parser.add_argument("-l", "--sub-language",
+    help="Language code of the subtitles. If specified it adds the code to the file name before the extension.",
+    type=str,
+    default="")
+parser.add_argument("-f", "--fallback-encoding",
+    help="Fallback encoding of subtitle file if autodetection falls.",
+    type=str,
+    default="windows-1250")
+args = parser.parse_args()
+
+class COLORS(object):
+  ok = "\033[0;32m"
+  warn = "\033[0;33m"
+  err = "\033[0;31m"
+  hi = "\033[1;33m"
+  nc = "\033[0m"
+
+def link(source, destination): # Link files instead of copying
+    print "{C.ok}LINK: {C.hi}{source}{C.nc} ---> {C.hi}{destination}{C.nc}".format(
+        C=COLORS(),
+        source=source,
+        destination=destination)
+    if not args.dry_run:
+      os.link(source, destination)
+
+def sub_link(source, destination): # link UTF-8 files, convert others to UTF-8 in destination instead
+    detector = UniversalDetector()
+    with open(source,"rb") as sub_file:
+        for line in sub_file.readlines():
+            detector.feed(line)
+            if detector.done: break
+        encoding=args.fallback_encoding
+        if type(detector.result["encoding"]) is str and detector.result["confidence"] > 0.5:
+            encoding=detector.result["encoding"]
+            print "Subtitle '{source}' found to be '{encoding}'".format(
+                source=source,
+                encoding=detector.result["encoding"])
+        else:
+            print "{C.warn}WARN:{C.nc} Subtitle '{source}' found to use '{encoding}' encoding with {confidence:.0%} confidence.".format(
+                C=COLORS(),
+                source=source,
+                encoding=detector.result["encoding"],
+                confidence=detector.result["confidence"] * 100)
+            print "{C.warn}WARN:{C.nc} Using '{fallback}' as a fallback".format(C=COLORS(), fallback=args.fallback_encoding)
+        if encoding[:3] == "UTF":
+            link(source, destination)
+        else:
+            print "{C.ou}CONVERT:{C.hi} {source}{C.nc}---> {C.hi}{destination}{C.nc} [utf-8]".format(
+                C=COLORS(),
+                source=source,
+                destination=destination)
+            if not args.dry_run:
+                sub_file.seek(0)
+                with open(destination, "wb") as dest:
+                    dest.write(unicode(sub_file.read(), encoding).encode("utf-8"))
+
+def make_dir(target):
+    print "{C.ok}MKDIR: {C.hi}{target}{C.nc}".format(C=COLORS(), target=target)
+    if not args.dry_run:
+      os.makedirs(target)
+
+def ext_filter(files, extensions):
+    for one in sorted(files):
+        if os.path.splitext(one)[1][1:] in extensions: yield one
+
+
+movie_extensions=args.extensions.split(",")
+subtitle_extensions=args.sub_extensions.split(",")
+movie_dir = "{media}/{name}".format(media=args.media, name=args.name)
+
+if os.path.exists(movie_dir):
+    parser.exit(status=1, message="{C.err}ERR:Movie directory already present in library!{C.nc}\n".format(C=COLORS()))
+else:
+    make_dir(movie_dir)
+
+if not os.path.exists(args.source):
+    parser.exit(status=1, message="Source not found!")
+
+if os.path.isfile(args.source): # We have a single file, just copy it over
+    link(args.source, "{movie_dir}/{name}{extension}".format(
+        movie_dir=movie_dir,
+        name=args.name,
+        extension=os.path.splitext(args.source)[1]))
+elif os.path.isdir(args.source): # We have a directory, copy all the things
+    dirlist=os.listdir(args.source)
+    for one in dirlist:
+        if os.path.splitext(one)[1][1:] not in movie_extensions+subtitle_extensions:
+          print "{C.warn}WARN:{C.nc} Ignoring unknown file: {C.hi}{filename}{C.nc}".format(
+              C=COLORS(),
+              filename=one)
+    multipart=False
+    if len(list(ext_filter(dirlist, movie_extensions))) > 1:
+        multipart=True
+    # first do the movie files
+    for part, movie in enumerate(ext_filter(dirlist, movie_extensions), start=1):
+        link(
+            "{path}/{movie}".format(path=args.source, movie=movie),
+            "{movie_dir}/{name}{part}{extension}".format(
+                movie_dir=movie_dir,
+                name=args.name,
+                part= " - part{}".format(part) if multipart else "",
+                extension=os.path.splitext(movie)[1]))
+    # Now do the subtitles
+    for part, subtitle in enumerate(ext_filter(dirlist, subtitle_extensions), start=1):
+        sub_link(
+            "{path}/{subtitle}".format(path=args.source, subtitle=subtitle),
+            "{movie_dir}/{name}{part}{language}{extension}".format(
+                movie_dir=movie_dir,
+                name=args.name,
+                part= " - part{}".format(part) if multipart else "",
+                language="."+args.sub_language if args.sub_language else "",
+                extension=os.path.splitext(subtitle)[1]))
+
