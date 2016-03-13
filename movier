@@ -77,7 +77,7 @@ def sub_link(source, destination): # link UTF-8 files, convert others to UTF-8 i
         if encoding[:3] == "UTF":
             link(source, destination)
         else:
-            print "{C.ou}CONVERT:{C.hi} {source}{C.nc}---> {C.hi}{destination}{C.nc} [utf-8]".format(
+            print "{C.ok}CONVERT:{C.hi} {source}{C.nc}---> {C.hi}{destination}{C.nc} [utf-8]".format(
                 C=COLORS(),
                 source=source,
                 destination=destination)
