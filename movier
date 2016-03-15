@@ -18,6 +18,9 @@ parser.add_argument("source",
 parser.add_argument("-d", "--dry-run",
     help="Just print the steps, do not actually permform them",
     action="store_true")
+parser.add_argument("-i", "--ignore-existing",
+    help="Ignore existing target directory.",
+    action="store_true")
 parser.add_argument("-m", "--media",
     help="Target directory with your media library",
     type=str,
@@ -101,7 +104,8 @@ subtitle_extensions=args.sub_extensions.split(",")
 movie_dir = "{media}/{name}".format(media=args.media, name=args.name)
 
 if os.path.exists(movie_dir):
-    parser.exit(status=1, message="{C.err}ERR:Movie directory already present in library!{C.nc}\n".format(C=COLORS()))
+    if not args.ignore_existing:
+        parser.exit(status=1, message="{C.err}ERR:Movie directory already present in library!{C.nc}\n".format(C=COLORS()))
 else:
     make_dir(movie_dir)
 
@@ -109,10 +113,21 @@ if not os.path.exists(args.source):
     parser.exit(status=1, message="Source not found!")
 
 if os.path.isfile(args.source): # We have a single file, just copy it over
-    link(args.source, "{movie_dir}/{name}{extension}".format(
-        movie_dir=movie_dir,
-        name=args.name,
-        extension=os.path.splitext(args.source)[1]))
+    if os.path.splitext(args.source)[1][1:] in movie_extensions:
+        link(args.source, "{movie_dir}/{name}{extension}".format(
+            movie_dir=movie_dir,
+            name=args.name,
+            extension=os.path.splitext(args.source)[1]))
+    elif os.path.splitext(args.source)[1][1:] in subtitle_extensions:
+        sub_link(args.source, "{movie_dir}/{name}{language}{extension}".format(
+            movie_dir=movie_dir,
+            name=args.name,
+            language="."+args.sub_language if args.sub_language else "",
+            extension=os.path.splitext(args.source)[1]))
+    else:
+        print "{C.warn}WARN:{C.nc} Ignoring unknown file: {C.hi}{filename}{C.nc}".format(
+            C=COLORS(),
+            filename=args.source)
 elif os.path.isdir(args.source): # We have a directory, copy all the things
     dirlist=os.listdir(args.source)
     for one in dirlist:
