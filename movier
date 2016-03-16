@@ -20,7 +20,7 @@ parser.add_argument("source",
 parser.add_argument("-c", "--config-file",
     help="Config with default settings to load.",
     type=str,
-    default="~/.movier")
+    default="")
 parser.add_argument("-d", "--dry-run",
     help="Just print the steps, do not actually permform them",
     action="store_true")
