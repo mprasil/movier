@@ -4,7 +4,9 @@
 
 import argparse
 import os
+from os.path import expanduser
 import codecs
+from ConfigParser import SafeConfigParser
 from chardet.universaldetector import UniversalDetector
 
 
@@ -15,6 +17,10 @@ parser.add_argument("source",
     help="Where to copy the movie from (file or directory with movie) Defaults to current directory.",
     nargs="?",
     default="./")
+parser.add_argument("-c", "--config-file",
+    help="Config with default settings to load.",
+    type=str,
+    default="~/.movier")
 parser.add_argument("-d", "--dry-run",
     help="Just print the steps, do not actually permform them",
     action="store_true")
@@ -42,6 +48,12 @@ parser.add_argument("-f", "--fallback-encoding",
     type=str,
     default="windows-1250")
 args = parser.parse_args()
+
+file_cfg = SafeConfigParser()
+file_cfg.read(["/etc/movier/movier.cfg",expanduser("~/.movier.cfg"),expanduser(args.config_file)])
+if file_cfg.has_section("movier"):
+    parser.set_defaults(**dict(file_cfg.items("movier")))
+    args = parser.parse_args()
 
 class COLORS(object):
   ok = "\033[0;32m"
