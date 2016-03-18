@@ -13,6 +13,7 @@ setup(
 
     license="GPLv2 or later",
     description="Move movies to your library with proper name and subtitle encoding.",
+    long_description=open('README.rst').read(),
 
 
     install_requires=[
