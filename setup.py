@@ -3,7 +3,7 @@ from distutils.core import setup
 
 setup(
     name="movier",
-    version="0.2.0",
+    version="0.3.0",
 
     author="Miroslav Prasil",
     author_email="miroslav@prasil.info",

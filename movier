@@ -6,9 +6,11 @@ import argparse
 import os
 from os.path import expanduser
 import codecs
-from ConfigParser import SafeConfigParser
 from chardet.universaldetector import UniversalDetector
-
+try:
+    from configparser import SafeConfigParser
+except ImportError: # Most likely not running Python 3
+    from ConfigParser import SafeConfigParser
 
 parser = argparse.ArgumentParser(description='Copy movies to your library.')
 parser.add_argument("name",
@@ -63,10 +65,10 @@ class COLORS(object):
   nc = "\033[0m"
 
 def link(source, destination): # Link files instead of copying
-    print "{C.ok}LINK: {C.hi}{source}{C.nc} ---> {C.hi}{destination}{C.nc}".format(
+    print("{C.ok}LINK: {C.hi}{source}{C.nc} ---> {C.hi}{destination}{C.nc}".format(
         C=COLORS(),
         source=source,
-        destination=destination)
+        destination=destination))
     if not args.dry_run:
       os.link(source, destination)
 
@@ -79,30 +81,30 @@ def sub_link(source, destination): # link UTF-8 files, convert others to UTF-8 i
         encoding=args.fallback_encoding
         if type(detector.result["encoding"]) is str and detector.result["confidence"] > 0.5:
             encoding=detector.result["encoding"]
-            print "Subtitle '{source}' found to be '{encoding}'".format(
+            print("Subtitle '{source}' found to be '{encoding}'".format(
                 source=source,
-                encoding=detector.result["encoding"])
+                encoding=detector.result["encoding"]))
         else:
-            print "{C.warn}WARN:{C.nc} Subtitle '{source}' found to use '{encoding}' encoding with {confidence:.0%} confidence.".format(
+            print("{C.warn}WARN:{C.nc} Subtitle '{source}' found to use '{encoding}' encoding with {confidence:.0%} confidence.".format(
                 C=COLORS(),
                 source=source,
                 encoding=detector.result["encoding"],
-                confidence=detector.result["confidence"] * 100)
-            print "{C.warn}WARN:{C.nc} Using '{fallback}' as a fallback".format(C=COLORS(), fallback=args.fallback_encoding)
+                confidence=detector.result["confidence"] * 100))
+            print("{C.warn}WARN:{C.nc} Using '{fallback}' as a fallback".format(C=COLORS(), fallback=args.fallback_encoding))
         if encoding[:3] == "UTF":
             link(source, destination)
         else:
-            print "{C.ok}CONVERT:{C.hi} {source}{C.nc}---> {C.hi}{destination}{C.nc} [utf-8]".format(
+            print("{C.ok}CONVERT:{C.hi} {source}{C.nc}---> {C.hi}{destination}{C.nc} [utf-8]".format(
                 C=COLORS(),
                 source=source,
-                destination=destination)
+                destination=destination))
             if not args.dry_run:
                 sub_file.seek(0)
                 with open(destination, "wb") as dest:
                     dest.write(unicode(sub_file.read(), encoding).encode("utf-8"))
 
 def make_dir(target):
-    print "{C.ok}MKDIR: {C.hi}{target}{C.nc}".format(C=COLORS(), target=target)
+    print("{C.ok}MKDIR: {C.hi}{target}{C.nc}".format(C=COLORS(), target=target))
     if not args.dry_run:
       os.makedirs(target)
 
@@ -137,16 +139,16 @@ if os.path.isfile(args.source): # We have a single file, just copy it over
             language="."+args.sub_language if args.sub_language else "",
             extension=os.path.splitext(args.source)[1]))
     else:
-        print "{C.warn}WARN:{C.nc} Ignoring unknown file: {C.hi}{filename}{C.nc}".format(
+        print("{C.warn}WARN:{C.nc} Ignoring unknown file: {C.hi}{filename}{C.nc}".format(
             C=COLORS(),
-            filename=args.source)
+            filename=args.source))
 elif os.path.isdir(args.source): # We have a directory, copy all the things
     dirlist=os.listdir(args.source)
     for one in dirlist:
         if os.path.splitext(one)[1][1:] not in movie_extensions+subtitle_extensions:
-          print "{C.warn}WARN:{C.nc} Ignoring unknown file: {C.hi}{filename}{C.nc}".format(
+          print("{C.warn}WARN:{C.nc} Ignoring unknown file: {C.hi}{filename}{C.nc}".format(
               C=COLORS(),
-              filename=one)
+              filename=one))
     multipart=False
     if len(list(ext_filter(dirlist, movie_extensions))) > 1:
         multipart=True
