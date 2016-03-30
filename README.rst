@@ -86,7 +86,7 @@ Example of such configuration:
 
     [movier]
     sub_language=cz
-    media=/path/to/my/moview
+    media=/path/to/my/movies
     fallback_encoding=WINDOWS-1251
 
 
