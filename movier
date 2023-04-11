@@ -101,7 +101,7 @@ def sub_link(source, destination): # link UTF-8 files, convert others to UTF-8 i
             if not args.dry_run:
                 sub_file.seek(0)
                 with open(destination, "wb") as dest:
-                    dest.write(unicode(sub_file.read(), encoding).encode("utf-8"))
+                    dest.write(str(sub_file.read(), encoding).encode("utf-8"))
 
 def make_dir(target):
     print("{C.ok}MKDIR: {C.hi}{target}{C.nc}".format(C=COLORS(), target=target))
