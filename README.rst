@@ -109,6 +109,32 @@ Movier only depends on Chardet_ for subtitle character encoding detection.
 
 .. _Chardet: https://github.com/chardet/chardet
 
+Using with Nix flakes
+=====================
 
+Run directly
+------------
 
+.. code-block:: bash
 
+    nix run github:mprasil/movier -- --help
+
+Use in your flake
+-----------------
+
+Add to inputs:
+
+.. code-block:: nix
+
+    inputs.movier = {
+      url = "github:mprasil/movier";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+Then in NixOS module module:
+
+.. code-block:: nix
+
+    environment.systemPackages = [
+        inputs.movier.packages.${system}.movier
+    ];
