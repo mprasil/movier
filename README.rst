@@ -136,5 +136,5 @@ Then in NixOS module module:
 .. code-block:: nix
 
     environment.systemPackages = [
-        inputs.movier.packages.${system}.movier
+        inputs.movier.packages.${config.nixpkgs.system}.movier
     ];
