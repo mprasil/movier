@@ -3,7 +3,7 @@ from distutils.core import setup
 
 setup(
     name="movier",
-    version="0.3.0",
+    version="0.4.0",
 
     author="Miroslav Prasil",
     author_email="miroslav@prasil.info",
@@ -25,10 +25,9 @@ setup(
         "Environment :: Console",
         "Topic :: Utilities",
         "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
-        "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.6",
-        "Programming Language :: Python :: 2.7",
-
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
     ],
 
     scripts=["movier"]
