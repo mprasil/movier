@@ -1,7 +1,7 @@
 {
   description = "Flake package for movier";
   inputs = {
-    nixpkgs.url = "nixpkgs/nixos-24.05";
+    nixpkgs.url = "nixpkgs/nixos-25.11";
     utils.url = "github:numtide/flake-utils";
   };
   outputs = {
@@ -11,10 +11,11 @@
   }:
     utils.lib.eachDefaultSystem (system: let
       pkgs = import nixpkgs {inherit system;};
-      chardet = pkgs.python3Packages.chardet;
+      py3pkgs = pkgs.python3Packages;
+      chardet = py3pkgs.chardet;
 
       packages.default = packages.movier;
-      packages.movier = pkgs.python3Packages.buildPythonApplication {
+      packages.movier = py3pkgs.buildPythonApplication {
         name = "movier";
         version = "0.4.0";
         src = ./.;
@@ -22,6 +23,9 @@
         propagatedBuildInputs = [
           chardet
         ];
+
+        pyproject = true;
+        build-system = [py3pkgs.setuptools];
       };
 
       devShells.default = pkgs.mkShell {
